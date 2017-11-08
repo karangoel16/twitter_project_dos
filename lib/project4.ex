@@ -20,12 +20,12 @@ defmodule Project4 do
     Project4.Exdistutils.start_distributed(:project4)
     Project4.start_link(args)
     number_of_tweets=elem(args|>List.to_tuple,1) #This is for the number of nodes
-    IO.puts "Building Subscription list"
-    Enum.map(1..String.to_integer(number_of_node),fn(x)->
-      GenServer.cast({:Server,Node.self()},{:subscribe,x,Enum.take_random(1..String.to_integer(number_of_node),5)})
-    end)
     IO.puts "Building Network"
     Enum.map(1..String.to_integer(number_of_node),fn(x)->Project4.Client.start_link(Integer.to_string(x)|>String.to_atom)end)
+    #IO.puts "Building Subscription list"
+    #Enum.map(1..String.to_integer(number_of_node),fn(x)->
+    #  GenServer.cast({:Server,Node.self()},{:subscribe,x,Enum.take_random(1..String.to_integer(number_of_node),5)})
+    #end)
     IO.puts "Starting Tweet"
     Enum.map(1..String.to_integer(number_of_tweets),fn(x)->
       var=:rand.uniform(String.to_integer(number_of_tweets)+1)
