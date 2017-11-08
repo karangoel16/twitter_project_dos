@@ -9,9 +9,10 @@ defmodule Project4 do
          1->:hashtags
          2->:mentions
          3->subscriber of each system
+         4->this is for user to tweet id system
   '''
   def init(args) do
-    {:ok,{%{},%{},%{},%{}}}
+    {:ok,{%{},%{},%{},%{},%{}}}
   end
 
   def main(args) do
@@ -26,9 +27,10 @@ defmodule Project4 do
         GenServer.cast({:Server,Node.self()},{:subscribe,x,y})
       end)
     end)
-    IO.inspect Enum.map(1..String.to_integer(number_of_node),fn(x)->spawn(fn->Project4.Client.start_link(Integer.to_string(x)|>String.to_atom) end)end)
+    Enum.map(1..String.to_integer(number_of_node),fn(x)->spawn(fn->Project4.Client.start_link(Integer.to_string(x)|>String.to_atom) end)end)
     Enum.map(1..String.to_integer(number_of_tweets),fn(x)->
-      GenServer.cast({:rand.uniform(String.to_integer(number_of_tweets)+1)|>Integer.to_string|>String.to_atom,Node.self()},{:tweet,x,"#"<>RandomBytes.base62<>" "<>"@"<>Integer.to_string(:rand.uniform(String.to_integer(number_of_node)))})
+      var=:rand.uniform(String.to_integer(number_of_tweets)+1)
+      GenServer.cast({var|>Integer.to_string|>String.to_atom,Node.self()},{:tweet,x,"#"<>RandomBytes.base62<>" "<>"@"<>Integer.to_string(:rand.uniform(String.to_integer(number_of_node))),var})
     end)
   end
 
@@ -47,7 +49,7 @@ defmodule Project4 do
       :tweets->
         tweet=elem(state,0)
         tweet=Map.put(tweet,tweet_id,val)
-        IO.inspect tweet
+        #IO.inspect tweet
         state=Tuple.delete_at(state,0)|>Tuple.insert_at(0,tweet)
       :mentions->
         mention=elem(state,2)
@@ -60,14 +62,15 @@ defmodule Project4 do
         mention=Map.put(mention,tweet_id,val1)
         state=Tuple.delete_at(state,2)|>Tuple.insert_at(2,mention)
       :subscribe->
-        #IO.puts tweet_id
-        #IO.puts val
         subscribe=elem(state,3)
         val1=Map.get(subscribe,tweet_id,MapSet.new([])) #this will bring out the value of tweets
         val1=MapSet.put(val1,val)
         subscribe=Map.put(subscribe,tweet_id,val1)
-        #IO.inspect val1
         state=Tuple.delete_at(state,3)|>Tuple.insert_at(3,subscribe)
+      :user->
+        user= elem(state,4)
+        user=Map.put(user,val,tweet_id)
+        state=Tuple.delete_at(state,4)|>Tuple.insert_at(4,user)
      end
      {:noreply,state}
   end
