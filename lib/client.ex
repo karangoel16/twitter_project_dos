@@ -3,7 +3,7 @@ defmodule Project4.Client do
 
     def start_link(args) do
         #map=elem(GenServer.call({:Server,Node.self()},:msg,:infinity),3)
-        GenServer.start_link(__MODULE__,Map.get(map,args|>Atom.to_string|>String.to_integer,MapSet.new),name: args)
+        GenServer.start_link(__MODULE__,MapSet.new,name: args)
     end
 
     def init(args) do
