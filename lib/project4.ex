@@ -28,7 +28,7 @@ defmodule Project4 do
     end)
     IO.inspect Enum.map(1..String.to_integer(number_of_node),fn(x)->spawn(fn->Project4.Client.start_link(Integer.to_string(x)|>String.to_atom) end)end)
     Enum.map(1..String.to_integer(number_of_tweets),fn(x)->
-      GenServer.cast({:rand.uniform(String.to_integer(number_of_tweets)+1)|>Integer.to_string|>String.to_atom,Node.self()},{:tweet,x,"#hi @hi"})
+      GenServer.cast({:rand.uniform(String.to_integer(number_of_tweets)+1)|>Integer.to_string|>String.to_atom,Node.self()},{:tweet,x,"#"<>RandomBytes.base62<>" "<>"@"<>Integer.to_string(:rand.uniform(String.to_integer(number_of_node)))})
     end)
   end
 

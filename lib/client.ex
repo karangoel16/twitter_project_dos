@@ -24,7 +24,8 @@ defmodule Project4.Client do
                     end)
                     Enum.map(Map.get(map,:mentions,[]),fn(x)->
                         if GenServer.whereis({String.replace_prefix(x,"@","")|>String.to_atom,Node.self()}) != nil do
-                            GenServer.cast({String.replace_prefix(x,"@","")|>String.to_atom,Node.self()},{:retweet,number,tweet_msg})
+                            IO.puts x
+                            GenServer.cast({String.replace_prefix(x,"@","")|>String.to_atom,Node.self()},{:mention,number,tweet_msg})
                         end
                         GenServer.cast({:Server,Node.self()},{:mentions,x,number})
                     end)
@@ -49,6 +50,8 @@ defmodule Project4.Client do
                 end
             :mention->
                 mention=elem(state,2)
+                mention=Map.put(mention,number,tweet_msg)
+                state=Tuple.delete_at(state,2)|>Tuple.insert_at(2,mention)
             :subscribe->
                 #we are adding subscribers here for the functions to work
                 map=elem(state,0)
