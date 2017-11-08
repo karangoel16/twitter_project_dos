@@ -25,12 +25,13 @@ defmodule Project4 do
       GenServer.cast({:Server,Node.self()},{:subscribe,x,Enum.take_random(1..String.to_integer(number_of_node),5)})
     end)
     IO.puts "Building Network"
-    Enum.map(1..String.to_integer(number_of_node),fn(x)->spawn(fn->Project4.Client.start_link(Integer.to_string(x)|>String.to_atom) end)end)
+    Enum.map(1..String.to_integer(number_of_node),fn(x)->Project4.Client.start_link(Integer.to_string(x)|>String.to_atom)end)
     IO.puts "Starting Tweet"
     Enum.map(1..String.to_integer(number_of_tweets),fn(x)->
       var=:rand.uniform(String.to_integer(number_of_tweets)+1)
       GenServer.cast({var|>Integer.to_string|>String.to_atom,Node.self()},{:tweet,x,"#"<>RandomBytes.base62<>" "<>"@"<>Integer.to_string(:rand.uniform(String.to_integer(number_of_node))),var})
     end)
+    Process.sleep(1_000_000)
   end
 
   def handle_cast({msg,tweet_id,val},state) do
