@@ -56,7 +56,7 @@ defmodule Project4.Client do
             :subscribe->
                 #we are adding subscribers here for the functions to work
                 map=elem(state,0)
-                map=Map.put(map,number,1)
+                map=MapSet.new(number)
                 state=Tuple.delete_at(state,0)|>Tuple.insert_at(0,map)
             :show->
                 tweet=elem(state,1)
