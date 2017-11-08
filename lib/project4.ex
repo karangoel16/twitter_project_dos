@@ -22,11 +22,7 @@ defmodule Project4 do
     number_of_tweets=elem(args|>List.to_tuple,1) #This is for the number of nodes
     IO.puts "Building Subscription list"
     Enum.map(1..String.to_integer(number_of_node),fn(x)->
-      Enum.map(Enum.take_random(1..String.to_integer(number_of_node),5),fn(y)->
-        #IO.inspect x 
-        #IO.inspect y
-        GenServer.cast({:Server,Node.self()},{:subscribe,x,y})
-      end)
+      GenServer.cast({:Server,Node.self()},{:subscribe,x,Enum.take_random(1..String.to_integer(number_of_node),5)})
     end)
     IO.puts "Building Network"
     Enum.map(1..String.to_integer(number_of_node),fn(x)->spawn(fn->Project4.Client.start_link(Integer.to_string(x)|>String.to_atom) end)end)
@@ -66,8 +62,8 @@ defmodule Project4 do
         state=Tuple.delete_at(state,2)|>Tuple.insert_at(2,mention)
       :subscribe->
         subscribe=elem(state,3)
-        val1=Map.get(subscribe,tweet_id,MapSet.new([])) #this will bring out the value of tweets
-        val1=MapSet.put(val1,val)
+        #val1=Map.get(subscribe,tweet_id,MapSet.new([])) #this will bring out the value of tweets
+        val1=MapSet.new(val)
         subscribe=Map.put(subscribe,tweet_id,val1)
         state=Tuple.delete_at(state,3)|>Tuple.insert_at(3,subscribe)
       :user->
