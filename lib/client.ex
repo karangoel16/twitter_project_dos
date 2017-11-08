@@ -2,8 +2,8 @@ defmodule Project4.Client do
     use GenServer
 
     def start_link(args) do
-        #map=elem(GenServer.call({:Server,Node.self()},:msg,:infinity),3)
-        GenServer.start_link(__MODULE__,MapSet.new,name: args)
+        map=elem(GenServer.call({:Server,Node.self()},:msg,:infinity),3)
+        GenServer.start_link(__MODULE__,map,name: args)
     end
 
     def init(args) do
