@@ -34,7 +34,7 @@ defmodule Project4.Client do
                     tweet=Map.put(tweet,number,tweet_msg)
                     Enum.map(elem(state,0)|>MapSet.to_list,fn(x)->
                         if GenServer.whereis({x|>Integer.to_string|>String.to_atom,Node.self()}) != nil do
-                            GenServer.cast({x|>Integer.to_string|>String.to_atom,Node.self()},{:show,number,tweet_msg,name})
+                            GenServer.cast({x|>Integer.to_string|>String.to_atom,Node.self()},{:show,number,tweet_msg,x})
                         end
                     end)
                     state=Tuple.delete_at(state,1)|>Tuple.insert_at(1,tweet)
@@ -43,9 +43,10 @@ defmodule Project4.Client do
                 tweet=elem(state,1)
                 tweet_msg=Map.get(tweet,number,nil)
                 if tweet_msg != nil do
+                    IO.puts tweet_msg
                     Enum.map(elem(state,0)|>MapSet.to_list,fn(x)->
                         if GenServer.whereis({x|>Integer.to_string|>String.to_atom,Node.self()}) != nil do
-                            GenServer.cast({x|>Integer.to_string|>String.to_atom,Node.self()},{:show,number,tweet_msg,name})
+                            GenServer.cast({x|>Integer.to_string|>String.to_atom,Node.self()},{:show,number,tweet_msg,x})
                         end
                     end)
                 end
@@ -59,6 +60,9 @@ defmodule Project4.Client do
                 map=MapSet.new(number)
                 state=Tuple.delete_at(state,0)|>Tuple.insert_at(0,map)
             :show->
+                if :rand.uniform(5)==2 do
+                    GenServer.cast({name|>Integer.to_string|>String.to_atom,Node.self()},{:retweet,number,tweet_msg,name})
+                end
                 tweet=elem(state,1)
                 tweet=Map.put(tweet,number,tweet_msg)
                 state=Tuple.delete_at(state,1)|>Tuple.insert_at(1,tweet)
