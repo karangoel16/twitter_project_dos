@@ -2,7 +2,7 @@ defmodule Project4.Client do
     use GenServer
 
     def start_link(args) do
-        map=elem(GenServer.call({:Server,Node.self()},:msg,:infinity),3)
+        map=elem(GenServer.call({:Server,Node.self()},{:server,""},:infinity),3)
         GenServer.start_link(__MODULE__,map,name: args)
     end
 
@@ -10,8 +10,25 @@ defmodule Project4.Client do
         {:ok,{args,%{},%{}}} #here the first elem is for the subsriber, #second elem is for the tweets
     end
 
-  def handle_call(msg,_from,state) do
-    {:reply,state,state}
+  def handle_call({msg,name},_from,state) do
+    reply=""
+    case msg do
+       :mentions->
+         tup=GenServer.call({:Server,Node.self()},{msg,name},:infinity)
+         tweet=elem(tup,0)
+         mentions=elem(tup,1)
+         Enum.map(MapSet.to_list(mentions),fn(x)->
+            IO.puts Map.get(tweet,x,"")  
+         end)
+       :hashtags->
+         tup=GenServer.call({:Server,Node.self()},{msg,name},:infinity)
+         tweet=elem(tup,0)
+         hashtags=elem(tup,1)
+         Enum.map(Map.get(hashtags,name,MapSet.new)|>MapSet.to_list,fn(x)->
+            IO.puts Map.get(tweet,x,"")   
+         end)
+    end
+    {:reply,reply,state}
   end
     def handle_cast({msg,number,tweet_msg,name},state) do
         case msg do

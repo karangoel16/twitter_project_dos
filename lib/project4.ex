@@ -51,7 +51,6 @@ defmodule Project4 do
       :tweets->
         tweet=elem(state,0)
         tweet=Map.put(tweet,tweet_id,val)
-        #IO.inspect tweet
         state=Tuple.delete_at(state,0)|>Tuple.insert_at(0,tweet)
       :mentions->
         mention=elem(state,2)
@@ -77,7 +76,21 @@ defmodule Project4 do
      {:noreply,state}
   end
 
-  def handle_call(msg,_from,state) do
-    {:reply,state,state}
+  def handle_call({msg,name},_from,state) do
+    reply=""
+    case msg do
+      :mentions->
+        mention=elem(state,2)
+        result=Map.get(mention,"@"<>Integer.to_string(name),%{})
+        tweet=elem(state,0)
+        reply={tweet,result}
+      :server->
+        reply=state
+      :hashtags->
+        hashtags=elem(state,1)
+        tweet=elem(state,0)
+        reply={tweet,hashtags}
+    end
+    {:reply,reply,state}
   end
 end
