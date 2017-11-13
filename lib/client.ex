@@ -1,6 +1,7 @@
 defmodule Project4.Client do
     use GenServer
 
+
     def start_link(args) do
         map=elem(GenServer.call({:Server,Node.self()},{:server,""},:infinity),3)
         GenServer.start_link(__MODULE__,map,name: args)
@@ -9,6 +10,7 @@ defmodule Project4.Client do
     def init(args) do
         {:ok,{args,%{},%{}}} #here the first elem is for the subsriber, #second elem is for the tweets
     end
+
 
   def handle_call({msg,name},_from,state) do
     reply=""

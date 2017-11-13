@@ -1,6 +1,8 @@
 defmodule Project4 do
   use GenServer
   
+  @s 2
+  @t 1
   def start_link(args) do
     GenServer.start_link(__MODULE__,args,name: :Server)
   end
@@ -15,6 +17,11 @@ defmodule Project4 do
     {:ok,{%{},%{},%{},%{},%{}}}
   end
 
+  def cal_const(number_of_nodes) do
+    sum=Enum.sum(Enum.map(1..number_of_nodes,fn(x)->:math.pow(1/x,@s) end))
+    #IO.puts sum
+    1/sum
+  end
   def main(args) do
     number_of_node=elem(args|>List.to_tuple,0)
     Project4.Exdistutils.start_distributed(:project4)
@@ -23,18 +30,24 @@ defmodule Project4 do
     IO.puts "Building Network"
     Enum.map(1..String.to_integer(number_of_node),fn(x)->Project4.Client.start_link(Integer.to_string(x)|>String.to_atom)end)
     GenServer.stop({:"8",Node.self()})
+    const_no=cal_const(String.to_integer(number_of_node))
+    const=const_no*String.to_integer(number_of_node)
     IO.puts "Building Subscription list"
     Enum.map(1..String.to_integer(number_of_node),fn(x)->
-      val=Enum.take_random(1..String.to_integer(number_of_node),5)
+      val=Enum.take_random(1..String.to_integer(number_of_node),(const/:math.pow(x,@s)|>:math.ceil|>round))
       GenServer.cast({x|>Integer.to_string|>String.to_atom,Node.self()},{:subscribe,val,"",""})
       GenServer.cast({:Server,Node.self()},{:subscribe,x,val})
     end)
     IO.puts "Starting Tweet"
-    Enum.map(1..String.to_integer(number_of_tweets),fn(x)->
-      var=:rand.uniform(String.to_integer(number_of_tweets)+1)
-      GenServer.cast({var|>Integer.to_string|>String.to_atom,Node.self()},{:tweet,x,"#"<>RandomBytes.base62<>" "<>"@"<>Integer.to_string(8),var})#(:rand.uniform(String.to_integer(number_of_node))),var})
+    #sub=elem(GenServer.call({:Server,Node.self()},{:server,""}),2)
+    const=const_no*String.to_integer(number_of_tweets)
+    Enum.map(1..String.to_integer(number_of_node),fn(x)->
+      Enum.map(1..(const/:math.pow(x,@s)|>:math.ceil|>round),fn(y)->
+        tweet=Map.keys(elem(GenServer.call({:Server,Node.self()},{:server,""},:infinity),0))|>length
+        IO.puts tweet
+        GenServer.cast({x|>Integer.to_string|>String.to_atom,Node.self()},{:tweet,tweet,"#"<>RandomBytes.base62<>" "<>"@"<>Integer.to_string(:rand.uniform(String.to_integer(number_of_node))),x})
+      end)
     end)
-    #Process.sleep(1_000_000)
   end
 
   def handle_cast({msg,tweet_id,val},state) do
