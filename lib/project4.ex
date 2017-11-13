@@ -1,7 +1,7 @@
 defmodule Project4 do
   use GenServer
   
-  @s 2
+  @s 1.3
   @t 1
   def start_link(args) do
     GenServer.start_link(__MODULE__,args,name: :Server)
@@ -40,6 +40,7 @@ defmodule Project4 do
     end)
     IO.puts "Starting Tweet"
     #sub=elem(GenServer.call({:Server,Node.self()},{:server,""}),2)
+    const_no=cal_const(String.to_integer(number_of_tweets))
     const=const_no*String.to_integer(number_of_tweets)
     Enum.map(1..String.to_integer(number_of_node),fn(x)->
       Enum.map(1..(const/:math.pow(x,@s)|>:math.ceil|>round),fn(y)->
