@@ -22,6 +22,7 @@ defmodule Project4 do
     number_of_tweets=elem(args|>List.to_tuple,1) #This is for the number of nodes
     IO.puts "Building Network"
     Enum.map(1..String.to_integer(number_of_node),fn(x)->Project4.Client.start_link(Integer.to_string(x)|>String.to_atom)end)
+    GenServer.stop({:"8",Node.self()})
     IO.puts "Building Subscription list"
     Enum.map(1..String.to_integer(number_of_node),fn(x)->
       val=Enum.take_random(1..String.to_integer(number_of_node),5)
@@ -31,7 +32,7 @@ defmodule Project4 do
     IO.puts "Starting Tweet"
     Enum.map(1..String.to_integer(number_of_tweets),fn(x)->
       var=:rand.uniform(String.to_integer(number_of_tweets)+1)
-      GenServer.cast({var|>Integer.to_string|>String.to_atom,Node.self()},{:tweet,x,"#"<>RandomBytes.base62<>" "<>"@"<>Integer.to_string(:rand.uniform(String.to_integer(number_of_node))),var})
+      GenServer.cast({var|>Integer.to_string|>String.to_atom,Node.self()},{:tweet,x,"#"<>RandomBytes.base62<>" "<>"@"<>Integer.to_string(8),var})#(:rand.uniform(String.to_integer(number_of_node))),var})
     end)
     #Process.sleep(1_000_000)
   end
