@@ -2,7 +2,7 @@ defmodule Project4 do
   use GenServer
   
   @s 1.3
-  @t 1
+
   def start_link(args) do
     GenServer.start_link(__MODULE__,args,name: :Server)
   end
@@ -42,11 +42,13 @@ defmodule Project4 do
     #sub=elem(GenServer.call({:Server,Node.self()},{:server,""}),2)
     const_no=cal_const(String.to_integer(number_of_tweets))
     const=const_no*String.to_integer(number_of_tweets)
-    Enum.map(1..String.to_integer(number_of_node),fn(x)->
-      Enum.map(1..(const/:math.pow(x,@s)|>:math.ceil|>round),fn(y)->
-        tweet=Map.keys(elem(GenServer.call({:Server,Node.self()},{:server,""},:infinity),0))|>length
+    Enum.reduce(1..String.to_integer(number_of_node),0,fn(x,tweet)->
+      Enum.reduce(1..(const/:math.pow(x,@s)|>:math.ceil|>round),tweet,fn(y,tweet)->
+        #tweet=Map.keys(elem(GenServer.call({:Server,Node.self()},{:server,""},:infinity),0))|>length
         IO.puts tweet
+        new_tweet=tweet+1
         GenServer.cast({x|>Integer.to_string|>String.to_atom,Node.self()},{:tweet,tweet,"#"<>RandomBytes.base62<>" "<>"@"<>Integer.to_string(:rand.uniform(String.to_integer(number_of_node))),x})
+        new_tweet
       end)
     end)
   end
