@@ -11,10 +11,11 @@ defmodule Project4 do
          1->:hashtags
          2->:mentions
          3->subscriber of each system
-         4->this is for user to tweet id system
+         4->this is for user to tweet id
+         5->to calculate the number of tweets in the system we will have to save everything
   '''
   def init(args) do
-    {:ok,{%{},%{},%{},%{},%{}}}
+    {:ok,{%{},%{},%{},%{},%{},0}}
   end
 
   def cal_const(number_of_nodes) do
@@ -22,6 +23,7 @@ defmodule Project4 do
     #IO.puts sum
     1/sum
   end
+  
   def main(args) do
     number_of_node=elem(args|>List.to_tuple,0)
     Project4.Exdistutils.start_distributed(:project4)
@@ -38,6 +40,7 @@ defmodule Project4 do
       GenServer.cast({x|>Integer.to_string|>String.to_atom,Node.self()},{:subscribe,val,"",""})
       GenServer.cast({:Server,Node.self()},{:subscribe,x,val})
     end)
+    spawn(fn->loop(0) end)
     IO.puts "Starting Tweet"
     #sub=elem(GenServer.call({:Server,Node.self()},{:server,""}),2)
     const_no=cal_const(String.to_integer(number_of_tweets))
@@ -45,14 +48,23 @@ defmodule Project4 do
     Enum.reduce(1..String.to_integer(number_of_node),0,fn(x,tweet)->
       Enum.reduce(1..(const/:math.pow(x,@s)|>:math.ceil|>round),tweet,fn(y,tweet)->
         #tweet=Map.keys(elem(GenServer.call({:Server,Node.self()},{:server,""},:infinity),0))|>length
-        IO.puts tweet
         new_tweet=tweet+1
         GenServer.cast({x|>Integer.to_string|>String.to_atom,Node.self()},{:tweet,tweet,"#"<>RandomBytes.base62<>" "<>"@"<>Integer.to_string(:rand.uniform(String.to_integer(number_of_node))),x})
         new_tweet
       end)
     end)
   end
-
+  
+  def loop(prev_len) do
+    IO.puts prev_len
+    len=elem(GenServer.call({:Server,Node.self()},{:server,""}),5)
+    if prev_len == len do
+      Process.exit(self(),:kill)
+    end
+    #Process.sleep(10)
+    loop(len)
+  end
+  
   def handle_cast({msg,tweet_id,val},state) do
      case msg do
       :hashtags_insert->
@@ -87,8 +99,12 @@ defmodule Project4 do
         state=Tuple.delete_at(state,3)|>Tuple.insert_at(3,subscribe)
       :user->
         user= elem(state,4)
-        user=Map.put(user,val,tweet_id)
+        user=Map.put(user,tweet_id,val)
         state=Tuple.delete_at(state,4)|>Tuple.insert_at(4,user)
+      :val->
+        val=elem(state,5)
+        val=val+1
+        state=Tuple.delete_at(state,5)|>Tuple.insert_at(5,val)
      end
      {:noreply,state}
   end
@@ -98,7 +114,7 @@ defmodule Project4 do
     case msg do
       :mentions->
         mention=elem(state,2)
-        result=Map.get(mention,"@"<>Integer.to_string(name),%{})
+        result=Map.get(mention,"@"<>Integer.to_string(name),MapSet.new)
         tweet=elem(state,0)
         reply={tweet,result}
       :server->

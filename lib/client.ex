@@ -1,7 +1,6 @@
 defmodule Project4.Client do
     use GenServer
 
-
     def start_link(args) do
         map=elem(GenServer.call({:Server,Node.self()},{:server,""},:infinity),3)
         GenServer.start_link(__MODULE__,map,name: args)
@@ -19,9 +18,9 @@ defmodule Project4.Client do
          tup=GenServer.call({:Server,Node.self()},{msg,name},:infinity)
          tweet=elem(tup,0)
          mentions=elem(tup,1)
-         Enum.map(MapSet.to_list(mentions),fn(x)->
+        Enum.map(MapSet.to_list(mentions),fn(x)->
             IO.puts Map.get(tweet,x,"")  
-         end)
+        end)
        :hashtags->
          tup=GenServer.call({:Server,Node.self()},{msg,name},:infinity)
          tweet=elem(tup,0)
@@ -35,9 +34,10 @@ defmodule Project4.Client do
     def handle_cast({msg,number,tweet_msg,name},state) do
         case msg do
             :tweet-> 
-                IO.puts tweet_msg
+                #IO.puts tweet_msg
                 tweet=elem(state,1)
                 if Map.get(tweet,number) == nil do
+                    GenServer.cast({:Server,Node.self()},{:val,0,0})#this is to increase the value of the tweet in the system
                     GenServer.cast({:Server,Node.self()},{:user,number,name}) #this is to add the value of the node in the structure
                     map=SocialParser.extract(tweet_msg,[:hashtags,:mentions])
                     Enum.map(Map.get(map,:hashtags,[]),fn(x)->
@@ -62,7 +62,8 @@ defmodule Project4.Client do
                 tweet=elem(state,1)
                 tweet_msg=Map.get(tweet,number,nil)
                 if tweet_msg != nil do
-                    IO.puts tweet_msg
+                    GenServer.cast({:Server,Node.self()},{:val,0,0})
+                    #IO.puts tweet_msg
                     Enum.map(elem(state,0)|>MapSet.to_list,fn(x)->
                         if GenServer.whereis({x|>Integer.to_string|>String.to_atom,Node.self()}) != nil do
                             GenServer.cast({x|>Integer.to_string|>String.to_atom,Node.self()},{:show,number,tweet_msg,x})
