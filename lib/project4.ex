@@ -40,7 +40,7 @@ defmodule Project4 do
       GenServer.cast({x|>Integer.to_string|>String.to_atom,Node.self()},{:subscribe,val,"",""})
       GenServer.cast({:Server,Node.self()},{:subscribe,x,val})
     end)
-    spawn(fn->loop(0) end)
+    spawn(fn->loop(-1) end)
     IO.puts "Starting Tweet"
     #sub=elem(GenServer.call({:Server,Node.self()},{:server,""}),2)
     const_no=cal_const(String.to_integer(number_of_tweets))
@@ -58,10 +58,11 @@ defmodule Project4 do
   def loop(prev_len) do
     IO.puts prev_len
     len=elem(GenServer.call({:Server,Node.self()},{:server,""}),5)
+    #IO.puts len
     if prev_len == len do
       Process.exit(self(),:kill)
     end
-    #Process.sleep(10)
+    Process.sleep(1000)
     loop(len)
   end
   
