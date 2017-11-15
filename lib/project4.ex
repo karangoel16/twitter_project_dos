@@ -56,9 +56,9 @@ defmodule Project4 do
   end
   
   def loop(prev_len) do
-    IO.puts prev_len
+    #IO.puts prev_len
     len=elem(GenServer.call({:Server,Node.self()},{:server,""}),5)
-    #IO.puts len
+    IO.puts len-prev_len
     if prev_len == len do
       Process.exit(self(),:kill)
     end
