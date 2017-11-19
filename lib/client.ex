@@ -10,7 +10,6 @@ defmodule Project4.Client do
         {:ok,{args,%{},%{}}} #here the first elem is for the subsriber, #second elem is for the tweets
     end
 
-
   def handle_call({msg,name},_from,state) do
     reply=""
     case msg do
@@ -31,44 +30,37 @@ defmodule Project4.Client do
     end
     {:reply,reply,state}
   end
+
     def handle_cast({msg,number,tweet_msg,name},state) do
         case msg do
             :tweet-> 
                 #IO.puts tweet_msg
                 tweet=elem(state,1)
                 if Map.get(tweet,number) == nil do
-                    GenServer.cast({:Server,Node.self()},{:val,0,0})#this is to increase the value of the tweet in the system
-                    GenServer.cast({:Server,Node.self()},{:user,number,name}) #this is to add the value of the node in the structure
+                    GenServer.cast({:Server,Node.self()},{:val,0,0,0})#this is to increase the value of the tweet in the system
+                    GenServer.cast({:Server,Node.self()},{:user,number,name,0}) #this is to add the value of the node in the structure
                     map=SocialParser.extract(tweet_msg,[:hashtags,:mentions])
                     Enum.map(Map.get(map,:hashtags,[]),fn(x)->
-                        GenServer.cast({:Server,Node.self()},{:hashtags_insert,x,number})
+                        GenServer.cast({:Server,Node.self()},{:hashtags_insert,x,number,0})
                     end)
                     Enum.map(Map.get(map,:mentions,[]),fn(x)->
                         if GenServer.whereis({String.replace_prefix(x,"@","")|>String.to_atom,Node.self()}) != nil do
                             GenServer.cast({String.replace_prefix(x,"@","")|>String.to_atom,Node.self()},{:mention,number,tweet_msg,name})
                         end
-                        GenServer.cast({:Server,Node.self()},{:mentions,x,number})
+                        GenServer.cast({:Server,Node.self()},{:mentions,x,number,0})
                     end)
-                    GenServer.cast({:Server,Node.self()},{:tweets,number,tweet_msg})
+                    GenServer.cast({:Server,Node.self()},{:tweets,number,tweet_msg,0})
+                    GenServer.cast({:Server,Node.self()},{:show,name,tweet_msg,number})
                     tweet=Map.put(tweet,number,tweet_msg)
-                    Enum.map(elem(state,0)|>MapSet.to_list,fn(x)->
-                        if GenServer.whereis({x|>Integer.to_string|>String.to_atom,Node.self()}) != nil do
-                            GenServer.cast({x|>Integer.to_string|>String.to_atom,Node.self()},{:show,number,tweet_msg,x})
-                        end
-                    end)
                     state=Tuple.delete_at(state,1)|>Tuple.insert_at(1,tweet)
                 end
             :retweet->
                 tweet=elem(state,1)
                 tweet_msg=Map.get(tweet,number,nil)
                 if tweet_msg != nil do
-                    GenServer.cast({:Server,Node.self()},{:val,0,0})
+                    GenServer.cast({:Server,Node.self()},{:val,0,0,0})
                     #IO.puts tweet_msg
-                    Enum.map(elem(state,0)|>MapSet.to_list,fn(x)->
-                        if GenServer.whereis({x|>Integer.to_string|>String.to_atom,Node.self()}) != nil do
-                            GenServer.cast({x|>Integer.to_string|>String.to_atom,Node.self()},{:show,number,tweet_msg,x})
-                        end
-                    end)
+                    GenServer.cast({:Server,Node.self()},{:show,name,tweet_msg,number})
                 end
             :mention->
                 mention=elem(state,2)

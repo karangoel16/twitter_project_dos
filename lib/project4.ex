@@ -38,7 +38,7 @@ defmodule Project4 do
     Enum.map(1..String.to_integer(number_of_node),fn(x)->
       val=Enum.take_random(1..String.to_integer(number_of_node),(const/:math.pow(x,@s)|>:math.ceil|>round))
       GenServer.cast({x|>Integer.to_string|>String.to_atom,Node.self()},{:subscribe,val,"",""})
-      GenServer.cast({:Server,Node.self()},{:subscribe,x,val})
+      GenServer.cast({:Server,Node.self()},{:subscribe,x,val,0})
     end)
     spawn(fn->loop(-1) end)
     IO.puts "Starting Tweet"
@@ -66,7 +66,7 @@ defmodule Project4 do
     loop(len)
   end
   
-  def handle_cast({msg,tweet_id,val},state) do
+  def handle_cast({msg, tweet_id, val, number },state) do
      case msg do
       :hashtags_insert->
         hash=elem(state,1)
@@ -106,6 +106,12 @@ defmodule Project4 do
         val=elem(state,5)
         val=val+1
         state=Tuple.delete_at(state,5)|>Tuple.insert_at(5,val)
+      :show->
+        Enum.map(Map.get(elem(state,3),tweet_id,MapSet.new)|>MapSet.to_list,fn(x)->
+          if GenServer.whereis({x|>Integer.to_string|>String.to_atom,Node.self()}) != nil do
+              GenServer.cast({x|>Integer.to_string|>String.to_atom,Node.self()},{:show, number, val,x})
+          end
+      end)
      end
      {:noreply,state}
   end
