@@ -53,6 +53,9 @@ defmodule Project4 do
         new_tweet
       end)
     end)
+    if length(args)>2 do
+      GenServer.stop({args|>List.to_tuple|>elem(2)|>String.to_atom,Node.self()})
+    end
   end
   
   def loop(prev_len) do
@@ -100,7 +103,9 @@ defmodule Project4 do
         state=Tuple.delete_at(state,3)|>Tuple.insert_at(3,subscribe)
       :user->
         user= elem(state,4)
-        user=Map.put(user,tweet_id,val)
+        tweet=Map.get(user,val,MapSet.new)
+        tweet=MapSet.put(tweet,tweet_id)
+        user=Map.put(user,val,tweet)
         state=Tuple.delete_at(state,4)|>Tuple.insert_at(4,user)
       :val->
         val=elem(state,5)
@@ -108,6 +113,7 @@ defmodule Project4 do
         state=Tuple.delete_at(state,5)|>Tuple.insert_at(5,val)
       :show->
         Enum.map(Map.get(elem(state,3),tweet_id,MapSet.new)|>MapSet.to_list,fn(x)->
+          GenServer.cast({:Server,Node.self()},{:user,number,x,0})
           if GenServer.whereis({x|>Integer.to_string|>String.to_atom,Node.self()}) != nil do
               GenServer.cast({x|>Integer.to_string|>String.to_atom,Node.self()},{:show, number, val,x})
           end
@@ -130,6 +136,12 @@ defmodule Project4 do
         hashtags=elem(state,1)
         tweet=elem(state,0)
         reply={tweet,hashtags}
+       :user->
+        tweet=elem(state,0)
+        user=elem(state,4)
+        reply=Enum.map(Map.get(user,name,MapSet.new)|>MapSet.to_list,fn(x)->
+          Map.get(tweet,x)
+        end)
     end
     {:reply,reply,state}
   end

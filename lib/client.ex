@@ -37,8 +37,10 @@ defmodule Project4.Client do
                 #IO.puts tweet_msg
                 tweet=elem(state,1)
                 if Map.get(tweet,number) == nil do
-                    GenServer.cast({:Server,Node.self()},{:val,0,0,0})#this is to increase the value of the tweet in the system
-                    GenServer.cast({:Server,Node.self()},{:user,number,name,0}) #this is to add the value of the node in the structure
+                    GenServer.cast({:Server,Node.self()},{:val,0,0,0})
+                    #this is to increase the value of the tweet in the system
+                    #GenServer.cast({:Server,Node.self()},{:user,number,name,0})
+                    #this is to add the value of the node in the structure
                     map=SocialParser.extract(tweet_msg,[:hashtags,:mentions])
                     Enum.map(Map.get(map,:hashtags,[]),fn(x)->
                         GenServer.cast({:Server,Node.self()},{:hashtags_insert,x,number,0})
