@@ -8,13 +8,13 @@ defmodule Project4.Client do
         val="project4@"<>(args|>List.to_tuple|>elem(1))
         ping=Node.ping :"#{val}"
         if ping == :pang do
-            #IO.puts("Not able to Connect")
+            IO.puts("Not able to Connect")
             Process.exit(self(),2);
         end
         #end
-        #IO.puts("connecting to node successful")
+        IO.puts("connecting to node successful")
         Process.sleep(1000)
-        connect(args)
+        #connect(args)
     end
 
     def start_link(args) do
@@ -90,7 +90,7 @@ defmodule Project4.Client do
                 map=MapSet.new(number)
                 state=Tuple.delete_at(state,0)|>Tuple.insert_at(0,map)
             :show->
-                if :rand.uniform(5)==2 do
+                if :rand.uniform(50)==2 do
                     GenServer.cast({:global,name|>Integer.to_string|>String.to_atom},{:retweet,number,tweet_msg,name})
                 end
                 tweet=elem(state,1)
