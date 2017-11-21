@@ -45,17 +45,20 @@ defmodule Project4 do
     #sub=elem(GenServer.call({:Server,Node.self()},{:server,""}),2)
     const_no=cal_const(String.to_integer(number_of_tweets))
     const=const_no*String.to_integer(number_of_tweets)
+    if length(args)>2 do
+      GenServer.stop({args|>List.to_tuple|>elem(2)|>String.to_atom,Node.self()})
+    end
     Enum.reduce(1..String.to_integer(number_of_node),0,fn(x,tweet)->
       Enum.reduce(1..(const/:math.pow(x,@s)|>:math.ceil|>round),tweet,fn(y,tweet)->
         #tweet=Map.keys(elem(GenServer.call({:Server,Node.self()},{:server,""},:infinity),0))|>length
         new_tweet=tweet+1
-        GenServer.cast({x|>Integer.to_string|>String.to_atom,Node.self()},{:tweet,tweet,"#"<>RandomBytes.base62<>" "<>"@"<>Integer.to_string(:rand.uniform(String.to_integer(number_of_node))),x})
+        if GenServer.whereis({x|>Integer.to_string|>String.to_atom,Node.self})!= nil do
+          GenServer.cast({x|>Integer.to_string|>String.to_atom,Node.self()},{:tweet,tweet,"#"<>RandomBytes.base62<>" "<>"@"<>Integer.to_string(:rand.uniform(String.to_integer(number_of_node))),x})
+          Process.sleep(10)
+        end
         new_tweet
       end)
     end)
-    if length(args)>2 do
-      GenServer.stop({args|>List.to_tuple|>elem(2)|>String.to_atom,Node.self()})
-    end
   end
   
   def loop(prev_len) do
@@ -113,9 +116,10 @@ defmodule Project4 do
         state=Tuple.delete_at(state,5)|>Tuple.insert_at(5,val)
       :show->
         Enum.map(Map.get(elem(state,3),tweet_id,MapSet.new)|>MapSet.to_list,fn(x)->
-          GenServer.cast({:Server,Node.self()},{:user,number,x,0})
           if GenServer.whereis({x|>Integer.to_string|>String.to_atom,Node.self()}) != nil do
               GenServer.cast({x|>Integer.to_string|>String.to_atom,Node.self()},{:show, number, val,x})
+          else
+            GenServer.cast({:Server,Node.self()},{:user,number,x,0})
           end
       end)
      end
