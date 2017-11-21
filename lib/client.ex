@@ -1,9 +1,25 @@
 defmodule Project4.Client do
     use GenServer
 
+    def connect(args) do
+        #unless Node.alive?() do
+          #we will use the 2nd element as ip address of the stuff
+        Project4.Exdistutils.start_distributed(:project4,:ok)
+        val="project4@"<>(args|>List.to_tuple|>elem(1))
+        ping=Node.ping :"#{val}"
+        if ping == :pang do
+            #IO.puts("Not able to Connect")
+            Process.exit(self(),2);
+        end
+        #end
+        #IO.puts("connecting to node successful")
+        Process.sleep(1000)
+        connect(args)
+    end
+
     def start_link(args) do
-        map=elem(GenServer.call({:Server,Node.self()},{:server,""},:infinity),3)
-        GenServer.start_link(__MODULE__,map,name: args)
+        map=elem(GenServer.call({:global,:Server},{:server,""},:infinity),3)
+        GenServer.start_link(__MODULE__,map,name: {:global,args})
     end
 
     def init(args) do
@@ -14,14 +30,14 @@ defmodule Project4.Client do
     reply=""
     case msg do
        :mentions->
-         tup=GenServer.call({:Server,Node.self()},{msg,name},:infinity)
+         tup=GenServer.call({:global,:Server},{msg,name},:infinity)
          tweet=elem(tup,0)
          mentions=elem(tup,1)
         Enum.map(MapSet.to_list(mentions),fn(x)->
             IO.puts Map.get(tweet,x,"")  
         end)
        :hashtags->
-         tup=GenServer.call({:Server,Node.self()},{msg,name},:infinity)
+         tup=GenServer.call({:global,:Server},{msg,name},:infinity)
          tweet=elem(tup,0)
          hashtags=elem(tup,1)
          Enum.map(Map.get(hashtags,name,MapSet.new)|>MapSet.to_list,fn(x)->
@@ -37,22 +53,22 @@ defmodule Project4.Client do
                 #IO.puts tweet_msg
                 tweet=elem(state,1)
                 if Map.get(tweet,number) == nil do
-                    GenServer.cast({:Server,Node.self()},{:val,0,0,0})
+                    GenServer.cast({:global,:Server},{:val,0,0,0})
                     #this is to increase the value of the tweet in the system
                     #GenServer.cast({:Server,Node.self()},{:user,number,name,0})
                     #this is to add the value of the node in the structure
                     map=SocialParser.extract(tweet_msg,[:hashtags,:mentions])
                     Enum.map(Map.get(map,:hashtags,[]),fn(x)->
-                        GenServer.cast({:Server,Node.self()},{:hashtags_insert,x,number,0})
+                        GenServer.cast({:global,:Server},{:hashtags_insert,x,number,0})
                     end)
                     Enum.map(Map.get(map,:mentions,[]),fn(x)->
-                        if GenServer.whereis({String.replace_prefix(x,"@","")|>String.to_atom,Node.self()}) != nil do
-                            GenServer.cast({String.replace_prefix(x,"@","")|>String.to_atom,Node.self()},{:mention,number,tweet_msg,name})
+                        if GenServer.whereis({:global,String.replace_prefix(x,"@","")|>String.to_atom}) != nil do
+                            GenServer.cast({:global,String.replace_prefix(x,"@","")|>String.to_atom},{:mention,number,tweet_msg,name})
                         end
-                        GenServer.cast({:Server,Node.self()},{:mentions,x,number,0})
+                        GenServer.cast({:global,:Server},{:mentions,x,number,0})
                     end)
-                    GenServer.cast({:Server,Node.self()},{:tweets,number,tweet_msg,0})
-                    GenServer.cast({:Server,Node.self()},{:show,name,tweet_msg,number})
+                    GenServer.cast({:global,:Server},{:tweets,number,tweet_msg,0})
+                    GenServer.cast({:global,:Server},{:show,name,tweet_msg,number})
                     tweet=Map.put(tweet,number,tweet_msg)
                     state=Tuple.delete_at(state,1)|>Tuple.insert_at(1,tweet)
                 end
@@ -60,9 +76,9 @@ defmodule Project4.Client do
                 tweet=elem(state,1)
                 tweet_msg=Map.get(tweet,number,nil)
                 if tweet_msg != nil do
-                    GenServer.cast({:Server,Node.self()},{:val,0,0,0})
+                    GenServer.cast({:global,:Server},{:val,0,0,0})
                     #IO.puts tweet_msg
-                    GenServer.cast({:Server,Node.self()},{:show,name,tweet_msg,number})
+                    GenServer.cast({:global,:Server},{:show,name,tweet_msg,number})
                 end
             :mention->
                 mention=elem(state,2)
@@ -75,7 +91,7 @@ defmodule Project4.Client do
                 state=Tuple.delete_at(state,0)|>Tuple.insert_at(0,map)
             :show->
                 if :rand.uniform(5)==2 do
-                    GenServer.cast({name|>Integer.to_string|>String.to_atom,Node.self()},{:retweet,number,tweet_msg,name})
+                    GenServer.cast({:global,name|>Integer.to_string|>String.to_atom},{:retweet,number,tweet_msg,name})
                 end
                 tweet=elem(state,1)
                 tweet=Map.put(tweet,number,tweet_msg)

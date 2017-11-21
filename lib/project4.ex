@@ -4,7 +4,7 @@ defmodule Project4 do
   @s 1.3
 
   def start_link(args) do
-    GenServer.start_link(__MODULE__,args,name: :Server)
+    GenServer.start_link(__MODULE__,args,name: {:global,:Server})
   end
   '''
     Here 0->:tweet
@@ -25,45 +25,48 @@ defmodule Project4 do
   end
   
   def main(args) do
-    number_of_node=elem(args|>List.to_tuple,0)
-    Project4.Exdistutils.start_distributed(:project4)
-    Project4.start_link(args)
-    number_of_tweets=elem(args|>List.to_tuple,1) #This is for the number of nodes
-    IO.puts "Building Network"
-    Enum.map(1..String.to_integer(number_of_node),fn(x)->Project4.Client.start_link(Integer.to_string(x)|>String.to_atom)end)
-    GenServer.stop({:"8",Node.self()})
-    const_no=cal_const(String.to_integer(number_of_node))
-    const=const_no*String.to_integer(number_of_node)
-    IO.puts "Building Subscription list"
-    Enum.map(1..String.to_integer(number_of_node),fn(x)->
-      val=Enum.take_random(1..String.to_integer(number_of_node),(const/:math.pow(x,@s)|>:math.ceil|>round))
-      GenServer.cast({x|>Integer.to_string|>String.to_atom,Node.self()},{:subscribe,val,"",""})
-      GenServer.cast({:Server,Node.self()},{:subscribe,x,val,0})
-    end)
-    spawn(fn->loop(-1) end)
-    IO.puts "Starting Tweet"
-    #sub=elem(GenServer.call({:Server,Node.self()},{:server,""}),2)
-    const_no=cal_const(String.to_integer(number_of_tweets))
-    const=const_no*String.to_integer(number_of_tweets)
-    if length(args)>2 do
-      GenServer.stop({args|>List.to_tuple|>elem(2)|>String.to_atom,Node.self()})
-    end
-    Enum.reduce(1..String.to_integer(number_of_node),0,fn(x,tweet)->
-      Enum.reduce(1..(const/:math.pow(x,@s)|>:math.ceil|>round),tweet,fn(y,tweet)->
-        #tweet=Map.keys(elem(GenServer.call({:Server,Node.self()},{:server,""},:infinity),0))|>length
-        new_tweet=tweet+1
-        if GenServer.whereis({x|>Integer.to_string|>String.to_atom,Node.self})!= nil do
-          GenServer.cast({x|>Integer.to_string|>String.to_atom,Node.self()},{:tweet,tweet,"#"<>RandomBytes.base62<>" "<>"@"<>Integer.to_string(:rand.uniform(String.to_integer(number_of_node))),x})
-          Process.sleep(10)
-        end
-        new_tweet
+    if elem(args|>List.to_tuple,0)=="server" do
+      #this is for the number of tweets if we have server in the same
+      number_of_node=elem(args|>List.to_tuple,1)
+      Project4.Exdistutils.start_distributed(:project4)
+      Project4.start_link(args)
+      number_of_tweets=elem(args|>List.to_tuple,2) #This is for the number of nodes
+      IO.puts "Building Network"
+      Enum.map(1..String.to_integer(number_of_node),fn(x)->Project4.Client.start_link(Integer.to_string(x)|>String.to_atom)end)
+      const_no=cal_const(String.to_integer(number_of_node))
+      const=const_no*String.to_integer(number_of_node)
+      IO.puts "Building Subscription list"
+      Enum.map(1..String.to_integer(number_of_node),fn(x)->
+        val=Enum.take_random(1..String.to_integer(number_of_node),(const/:math.pow(x,@s)|>:math.ceil|>round))
+        GenServer.cast({:global,x|>Integer.to_string|>String.to_atom},{:subscribe,val,"",""})
+        GenServer.cast({:global,:Server},{:subscribe,x,val,0})
       end)
-    end)
+      spawn(fn->loop(-1) end)
+      IO.puts "Starting Tweet"
+      #sub=elem(GenServer.call({:Server,Node.self()},{:server,""}),2)
+      const_no=cal_const(String.to_integer(number_of_tweets))
+      const=const_no*String.to_integer(number_of_tweets)
+      if length(args)>3 do
+        GenServer.stop({:global,args|>List.to_tuple|>elem(2)|>String.to_atom})
+      end
+      
+      Enum.reduce(1..String.to_integer(number_of_node),0,fn(x,tweet)->
+        Enum.reduce(1..(const/:math.pow(x,@s)|>:math.ceil|>round),tweet,fn(y,tweet)->
+          #tweet=Map.keys(elem(GenServer.call({:Server,Node.self()},{:server,""},:infinity),0))|>length
+          new_tweet=tweet+1
+          if GenServer.whereis({:global,x|>Integer.to_string|>String.to_atom})!= nil do
+            GenServer.cast({:global,x|>Integer.to_string|>String.to_atom},{:tweet,tweet,"#"<>RandomBytes.base62<>" "<>"@"<>Integer.to_string(:rand.uniform(String.to_integer(number_of_node))),x})
+            Process.sleep(10)
+          end
+          new_tweet
+        end)
+      end)
+    end
   end
   
   def loop(prev_len) do
     #IO.puts prev_len
-    len=elem(GenServer.call({:Server,Node.self()},{:server,""}),5)
+    len=elem(GenServer.call({:global,:Server},{:server,""}),5)
     IO.puts len-prev_len
     if prev_len == len do
       Process.exit(self(),:kill)
@@ -116,10 +119,10 @@ defmodule Project4 do
         state=Tuple.delete_at(state,5)|>Tuple.insert_at(5,val)
       :show->
         Enum.map(Map.get(elem(state,3),tweet_id,MapSet.new)|>MapSet.to_list,fn(x)->
-          if GenServer.whereis({x|>Integer.to_string|>String.to_atom,Node.self()}) != nil do
-              GenServer.cast({x|>Integer.to_string|>String.to_atom,Node.self()},{:show, number, val,x})
+          if GenServer.whereis({:global,x|>Integer.to_string|>String.to_atom}) != nil do
+              GenServer.cast({:global,x|>Integer.to_string|>String.to_atom},{:show, number, val,x})
           else
-            GenServer.cast({:Server,Node.self()},{:user,number,x,0})
+            GenServer.cast({:global,:Server},{:user,number,x,0})
           end
       end)
      end
