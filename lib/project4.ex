@@ -30,6 +30,7 @@ defmodule Project4 do
       #this is for the number of tweets if we have server in the same
       Project4.Exdistutils.start_distributed(:project4)
       Project4.start_link(args)
+      spawn(fn->loop(-1) end)
     else
       Project4.Client.connect(args) 
       start=elem(GenServer.call({:global,:Server},{:server,""},:infinity),6) #this is to get the starting index of the present node
@@ -51,7 +52,6 @@ defmodule Project4 do
         GenServer.cast({:global,x|>Integer.to_string|>String.to_atom},{:subscribe,val,"",""})
         GenServer.cast({:global,:Server},{:subscribe,x,val,0})
       end)
-      spawn(fn->loop(-1) end)
       
       IO.puts "Starting Tweet"
       #sub=elem(GenServer.call({:Server,Node.self()},{:server,""}),2)
@@ -79,9 +79,9 @@ defmodule Project4 do
     #IO.puts prev_len
     len=elem(GenServer.call({:global,:Server},{:server,""}),5)
     IO.puts len-prev_len
-    if prev_len == len do
-      Process.exit(self(),:kill)
-    end
+    #if prev_len == len do
+    #  Process.exit(self(),:kill)
+    #end
     Process.sleep(1000)
     loop(len)
   end
