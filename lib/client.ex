@@ -50,7 +50,7 @@ defmodule Project4.Client do
     def handle_cast({msg,number,tweet_msg,name},state) do
         case msg do
             :tweet-> 
-                #IO.puts tweet_msg
+                IO.puts "tweet: from "<> Integer.to_string(name) <>" "<>tweet_msg
                 tweet=elem(state,1)
                 if Map.get(tweet,number) == nil do
                     GenServer.cast({:global,:Server},{:val,0,0,0})
@@ -77,7 +77,7 @@ defmodule Project4.Client do
                 tweet_msg=Map.get(tweet,number,nil)
                 if tweet_msg != nil do
                     GenServer.cast({:global,:Server},{:val,0,0,0})
-                    #IO.puts tweet_msg
+                    IO.puts "RT: from "<>Integer.to_string(name)<>" "<>tweet_msg
                     GenServer.cast({:global,:Server},{:show,name,tweet_msg,number})
                 end
             :mention->
