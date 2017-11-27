@@ -36,8 +36,7 @@ defmodule Project4 do
       start=elem(GenServer.call({:global,:Server},{:server,""},:infinity),6) #this is to get the starting index of the present node
       number_of_node=elem(args|>List.to_tuple,2)
       GenServer.cast({:global,:Server},{:user_added,number_of_node|>String.to_integer,"",""})
-      number_of_tweets=elem(args|>List.to_tuple,3) #This is for the number of nodes
-      
+      number_of_tweets=elem(args|>List.to_tuple,3) #This is for the number of nodes 
       IO.puts "Building Network"
       Enum.map(1..String.to_integer(number_of_node),fn(x)->
         Project4.Client.start_link(Integer.to_string(x+start)|>String.to_atom)
