@@ -12,9 +12,9 @@ defmodule Project4.Client do
             Process.exit(self(),2);
         end
         #end
-        IO.puts("connecting to node successful")
+        #IO.puts("connecting to node successful")
         Process.sleep(1000)
-        #connect(args)
+        connect(args)
     end
 
     def start_link(args) do
