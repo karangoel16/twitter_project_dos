@@ -85,9 +85,11 @@ defmodule Project4 do
   
   def random_start_stop(x) do
     Process.sleep(1000)
-    if(:rand.uniform(10000000000000000)==2) do
+    if(:rand.uniform(10000)==2) do
       if (GenServer.whereis({:global,x|>Integer.to_string|>String.to_atom})!=nil) do
         GenServer.stop({:global,x|>Integer.to_string|>String.to_atom})
+      else 
+        Project4.Client.start_link(Integer.to_string(x)|>String.to_atom)
       end
     else
       random_start_stop(x)
