@@ -13,21 +13,42 @@ defmodule Project4.Client do
         end
         #end
         IO.puts("connecting to node successful")
-        #Process.sleep(1000)
+        Process.sleep(1000)
         #connect(args)
     end
 
     def start_link(args) do
-        map=elem(GenServer.call({:global,:Server},{:server,""},:infinity),3)
-        GenServer.start_link(__MODULE__,map,name: {:global,args})
+        map=GenServer.call({:global,:Server},{:subscribe,args|>Atom.to_string|>String.to_integer},:infinity)
+        {:ok, {priv, pub}} = RsaEx.generate_keypair("2048")
+        server=GenServer.call({:global,:Server},{:secret,args|>Atom.to_string|>String.to_atom,pub})
+        GenServer.start_link(__MODULE__,{map,priv,pub,server},name: {:global,args})
     end
 
-    def init(args) do
-        {:ok,{args,%{},%{}}} #here the first elem is for the subsriber, #second elem is for the tweets
+    '''
+        0->
+        1->
+        2->private keys
+        3->public keys genserver
+        4->server public key
+    '''
+    def init({args,priv,pub,server}) do
+        {:ok,{args,%{},%{},priv,pub,server}} #here the first elem is for the subsriber, #second elem is for the tweets
     end
 
+  def encrypt(msg,public) do
+    {:ok, cipher_text} = RsaEx.encrypt(msg, public)
+    cipher_text
+  end
+  
+  def decrypt(msg,priv) do
+    {:ok, decrypted_clear_text} = RsaEx.decrypt(msg, priv)
+    decrypted_clear_text
+  end
+  
   def handle_call({msg,name},_from,state) do
     reply=""
+    pub=elem(state,4)
+    priv= elem(state,3)
     case msg do
        :mentions->
          tup=GenServer.call({:global,:Server},{msg,name},:infinity)
@@ -37,7 +58,7 @@ defmodule Project4.Client do
             IO.puts Map.get(tweet,x,"")  
         end)
        :hashtags->
-         tup=GenServer.call({:global,:Server},{msg,name},:infinity)
+         tup=GenServer.call({:global,:Server},{msg,name,pub},:infinity)
          tweet=elem(tup,0)
          hashtags=elem(tup,1)
          Enum.map(Map.get(hashtags,name,MapSet.new)|>MapSet.to_list,fn(x)->
@@ -48,6 +69,9 @@ defmodule Project4.Client do
   end
 
     def handle_cast({msg,number,tweet_msg,name},state) do
+        priv=elem(state,3)
+        pub = elem(state,4)
+        server = elem(state,5)
         case msg do
             :tweet-> 
                 IO.puts "tweet: from "<> Integer.to_string(name) <>" "<>tweet_msg
@@ -67,8 +91,8 @@ defmodule Project4.Client do
                         end
                         GenServer.cast({:global,:Server},{:mentions,x,number,0})
                     end)
-                    GenServer.cast({:global,:Server},{:tweets,number,tweet_msg,0})
-                    GenServer.cast({:global,:Server},{:show,name,tweet_msg,number})
+                    GenServer.cast({:global,:Server},{:tweets,number,encrypt(tweet_msg,server),0})
+                    GenServer.cast({:global,:Server},{:show,name,encrypt(tweet_msg,server),number})
                     tweet=Map.put(tweet,number,tweet_msg)
                     state=Tuple.delete_at(state,1)|>Tuple.insert_at(1,tweet)
                 end
@@ -77,8 +101,8 @@ defmodule Project4.Client do
                 tweet_msg=Map.get(tweet,number,nil)
                 if tweet_msg != nil do
                     GenServer.cast({:global,:Server},{:val,0,0,0})
-                    IO.puts "RT: from "<>Integer.to_string(name)<>" "<>tweet_msg
-                    GenServer.cast({:global,:Server},{:show,name,tweet_msg,number})
+                    IO.puts "RT: from "<>Integer.to_string(name)<>" "<>decrypt(tweet_msg,priv)
+                    GenServer.cast({:global,:Server},{:show,name,encrypt(decrypt(tweet_msg,priv),server),number})
                 end
             :mention->
                 mention=elem(state,2)

@@ -14,9 +14,14 @@ defmodule Project4 do
          4->this is for user to tweet id
          5->to calculate the number of tweets in the system we will have to save everything
          6->Node id used
+         7->priv keys
+         8->public keys
+         9->encryption
   '''
+
   def init(args) do
-    {:ok,{%{},%{},%{},%{},%{},0,0}}
+    {:ok, {priv, pub}} = RsaEx.generate_keypair("2048")
+    {:ok,{%{},%{},%{},%{},%{},0,0,priv,pub,%{}}}
   end
 
   def cal_const(number_of_nodes) do
@@ -34,7 +39,9 @@ defmodule Project4 do
       Process.sleep(1_000_000_000)
     else
       Project4.Client.connect(args)
-      start=elem(GenServer.call({:global,:Server},{:server,""},:infinity),6) #this is to get the starting index of the present node
+      state=GenServer.call({:global,:Server},{:server,""},:infinity)
+      start=elem(state,6) #this is to get the starting index of the present node
+      pub = elem(state,8)
       number_of_node=elem(args|>List.to_tuple,2)
       GenServer.cast({:global,:Server},{:user_added,number_of_node|>String.to_integer,"",""})
       number_of_tweets=elem(args|>List.to_tuple,3) #This is for the number of nodes 
@@ -79,12 +86,8 @@ defmodule Project4 do
   end
   
   def loop(prev_len) do
-    #IO.puts prev_len
     len=elem(GenServer.call({:global,:Server},{:server,""},:infinity),5)
     IO.puts len-prev_len
-    #if prev_len == len do
-    #  Process.exit(self(),:kill)
-    #end
     Process.sleep(1000)
     loop(len)
   end
@@ -102,7 +105,21 @@ defmodule Project4 do
       random_start_stop(x)
     end
   end
+
+  def encrypt(msg,public) do
+    {:ok, cipher_text} = RsaEx.encrypt(msg, public)
+    cipher_text
+  end
+  
+  def decrypt(msg,priv) do
+    {:ok, decrypted_clear_text} = RsaEx.decrypt(msg, priv)
+    decrypted_clear_text
+  end
+
   def handle_cast({msg, tweet_id, val, number },state) do
+    priv=elem(state,7)
+    public=elem(state,8)
+    #these are the private and the public keys of the network
      case msg do
       :hashtags_insert->
         hash=elem(state,1)
@@ -116,7 +133,7 @@ defmodule Project4 do
         state=Tuple.delete_at(state,1)|>Tuple.insert_at(1,hash)
       :tweets->
         tweet=elem(state,0)
-        tweet=Map.put(tweet,tweet_id,val)
+        tweet=Map.put(tweet,tweet_id,decrypt(val,priv))
         state=Tuple.delete_at(state,0)|>Tuple.insert_at(0,tweet)
       :mentions->
         mention=elem(state,2)
@@ -147,7 +164,9 @@ defmodule Project4 do
       :show->
         Enum.map(Map.get(elem(state,3),tweet_id,MapSet.new)|>MapSet.to_list,fn(x)->
           if GenServer.whereis({:global,x|>Integer.to_string|>String.to_atom}) != nil do
-              GenServer.cast({:global,x|>Integer.to_string|>String.to_atom},{:show, number, val,x})
+            key=Map.get(elem(state,9),x|>Integer.to_string|>String.to_atom) 
+            GenServer.cast({:global,x|>Integer.to_string|>String.to_atom},{:show, number, encrypt(decrypt(val,priv),key),x})
+              #we will send an ecrypted message to x here
           else
             GenServer.cast({:global,:Server},{:user,number,x,0})
           end
@@ -160,6 +179,16 @@ defmodule Project4 do
      {:noreply,state}
   end
 
+  def handle_call({msg,tweet_id,val},_from, state) do
+    reply=""
+    case msg do
+      :secret->
+        map=Map.put(elem(state,9),tweet_id,val)
+        state=Tuple.delete_at(state,9)|>Tuple.insert_at(9,map)
+        reply=elem(state,8)
+      end
+      {:reply,reply,state}
+  end
   def handle_call({msg,name},_from,state) do
     reply=""
     case msg do
@@ -168,6 +197,8 @@ defmodule Project4 do
         result=Map.get(mention,"@"<>Integer.to_string(name),MapSet.new)
         tweet=elem(state,0)
         reply={tweet,result}
+      :subscribe->
+        reply=Map.get(elem(state,3),name)
       :server->
         reply=state
       :hashtags->
