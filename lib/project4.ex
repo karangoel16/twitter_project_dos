@@ -48,8 +48,8 @@ defmodule Project4 do
       #we have added start to make the messages go on other nodes as well
       Enum.map(1..String.to_integer(number_of_node),fn(x)->
         val=Enum.take_random(1..(String.to_integer(number_of_node)+start),(const/:math.pow(x,@s)|>:math.ceil|>round))
-        GenServer.cast({:global,x|>Integer.to_string|>String.to_atom},{:subscribe,val,"",""})
-        GenServer.cast({:global,:Server},{:subscribe,x,val,0})
+        GenServer.cast({:global,(x+start)|>Integer.to_string|>String.to_atom},{:subscribe,val,"",""})
+        GenServer.cast({:global,:Server},{:subscribe,(x+start),val,0})
       end)
       
       IO.puts "Starting Tweet"
@@ -64,8 +64,8 @@ defmodule Project4 do
         Enum.reduce(1..(const/:math.pow(x,@s)|>:math.ceil|>round),tweet,fn(y,tweet)->
           #tweet=Map.keys(elem(GenServer.call({:Server,Node.self()},{:server,""},:infinity),0))|>length
           new_tweet=tweet+1
-          if GenServer.whereis({:global,x|>Integer.to_string|>String.to_atom})!= nil do
-            GenServer.cast({:global,x|>Integer.to_string|>String.to_atom},{:tweet,tweet,"#"<>RandomBytes.base62<>" "<>"@"<>Integer.to_string(:rand.uniform(String.to_integer(number_of_node))),x})
+          if GenServer.whereis({:global,(x+start)|>Integer.to_string|>String.to_atom})!= nil do
+            GenServer.cast({:global,(x+start)|>Integer.to_string|>String.to_atom},{:tweet,tweet,"#"<>RandomBytes.base62<>" "<>"@"<>Integer.to_string(:rand.uniform(String.to_integer(number_of_node)+start)),x})
             Process.sleep(10)
           end
           new_tweet
