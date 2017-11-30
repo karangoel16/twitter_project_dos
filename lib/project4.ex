@@ -50,22 +50,20 @@ defmodule Project4 do
         val=Enum.take_random(1..(String.to_integer(number_of_node)+start),(const/:math.pow(x,@s)|>:math.ceil|>round))
         GenServer.cast({:global,(x+start)|>Integer.to_string|>String.to_atom},{:subscribe,val,"",""})
         GenServer.cast({:global,:Server},{:subscribe,(x+start),val,0})
+        spawn(fn->random_start_stop(x+start)end)
       end)
-      
+
       IO.puts "Starting Tweet"
       #sub=elem(GenServer.call({:Server,Node.self()},{:server,""}),2)
       const_no=cal_const(String.to_integer(number_of_tweets))
       const=const_no*String.to_integer(number_of_tweets)
-      if length(args)>4 do
-        GenServer.stop({:global,args|>List.to_tuple|>elem(2)|>String.to_atom})
-      end
       
       Enum.reduce(1..String.to_integer(number_of_node),0,fn(x,tweet)->
         Enum.reduce(1..(const/:math.pow(x,@s)|>:math.ceil|>round),tweet,fn(y,tweet)->
           #tweet=Map.keys(elem(GenServer.call({:Server,Node.self()},{:server,""},:infinity),0))|>length
           new_tweet=tweet+1
           if GenServer.whereis({:global,(x+start)|>Integer.to_string|>String.to_atom})!= nil do
-            GenServer.cast({:global,(x+start)|>Integer.to_string|>String.to_atom},{:tweet,tweet,"#"<>RandomBytes.base62<>" "<>"@"<>Integer.to_string(:rand.uniform(String.to_integer(number_of_node)+start)),x})
+            GenServer.cast({:global,(x+start)|>Integer.to_string|>String.to_atom},{:tweet,tweet,"#"<>RandomBytes.base62<>" "<>"@"<>Integer.to_string(:rand.uniform(String.to_integer(number_of_node)+start)),x+start})
             Process.sleep(10)
           end
           new_tweet
@@ -85,6 +83,16 @@ defmodule Project4 do
     loop(len)
   end
   
+  def random_start_stop(x) do
+    Process.sleep(1000)
+    if(:rand.uniform(10000000000000000)==2) do
+      if (GenServer.whereis({:global,x|>Integer.to_string|>String.to_atom})!=nil) do
+        GenServer.stop({:global,x|>Integer.to_string|>String.to_atom})
+      end
+    else
+      random_start_stop(x)
+    end
+  end
   def handle_cast({msg, tweet_id, val, number },state) do
      case msg do
       :hashtags_insert->
