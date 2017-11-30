@@ -164,7 +164,7 @@ defmodule Project4 do
       :show->
         Enum.map(Map.get(elem(state,3),tweet_id,MapSet.new)|>MapSet.to_list,fn(x)->
           if GenServer.whereis({:global,x|>Integer.to_string|>String.to_atom}) != nil do
-            key=Map.get(elem(state,9),x|>Integer.to_string|>String.to_atom) 
+            key=Map.get(elem(state,9),x) 
             GenServer.cast({:global,x|>Integer.to_string|>String.to_atom},{:show, number, encrypt(decrypt(val,priv),key),x})
               #we will send an ecrypted message to x here
           else
