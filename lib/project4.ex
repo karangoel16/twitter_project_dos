@@ -33,7 +33,7 @@ defmodule Project4 do
       spawn(fn->loop(-1) end)
       Process.sleep(1_000_000_000)
     else
-      Project4.Client.connect(args) 
+      spawn(fn->Project4.Client.connect(args) end)
       start=elem(GenServer.call({:global,:Server},{:server,""},:infinity),6) #this is to get the starting index of the present node
       number_of_node=elem(args|>List.to_tuple,2)
       GenServer.cast({:global,:Server},{:user_added,number_of_node|>String.to_integer,"",""})
