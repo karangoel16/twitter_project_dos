@@ -18,9 +18,8 @@ defmodule Project4.Client do
     end
 
     def start_link(args) do
-        map=GenServer.call({:global,:Server},{:subscribe,args|>Atom.to_string|>String.to_integer},:infinity)
         {:ok, {priv, pub}} = RsaEx.generate_keypair("2048")
-        server=GenServer.call({:global,:Server},{:secret,args|>Atom.to_string|>String.to_integer,pub},:infinity)
+        {server,map}=GenServer.call({:global,:Server},{:secret,args|>Atom.to_string|>String.to_integer,pub},:infinity)
         GenServer.start_link(__MODULE__,{map,priv,pub,server},name: {:global,args})
     end
 

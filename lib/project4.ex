@@ -185,7 +185,7 @@ defmodule Project4 do
       :secret->
         map=Map.put(elem(state,9),tweet_id,val)
         state=Tuple.delete_at(state,9)|>Tuple.insert_at(9,map)
-        reply=elem(state,8)
+        reply={elem(state,8),Map.get(elem(state,3),tweet_id)}
       end
       {:reply,reply,state}
   end
