@@ -51,6 +51,10 @@ defmodule Project4 do
         val=Enum.take_random(1..(String.to_integer(number_of_node)+start),(const/:math.pow(x,@s)|>:math.ceil|>round))
         GenServer.cast({:global,(x+start)|>Integer.to_string|>String.to_atom},{:subscribe,val,"",""})
         GenServer.cast({:global,:Server},{:subscribe,(x+start),val,0})
+        #spawn(fn->random_start_stop(x+start)end)
+      end)
+
+      Enum.map(1..5,fn(x)->
         spawn(fn->random_start_stop(x+start)end)
       end)
 
