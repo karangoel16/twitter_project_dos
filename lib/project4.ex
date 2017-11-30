@@ -76,7 +76,7 @@ defmodule Project4 do
   
   def loop(prev_len) do
     #IO.puts prev_len
-    len=elem(GenServer.call({:global,:Server},{:server,""}),5)
+    len=elem(GenServer.call({:global,:Server},{:server,""},:infinity),5)
     IO.puts len-prev_len
     #if prev_len == len do
     #  Process.exit(self(),:kill)
