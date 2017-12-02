@@ -19,7 +19,7 @@ defmodule Project4.Client do
 
     def start_link(args) do
         map=elem(GenServer.call({:global,:Server},{:server,""},:infinity),3)
-        IO.puts "When new values were closed"
+        IO.puts "new values while closed "<>Atom.to_string(args)
         IO.inspect GenServer.call({:global,:Server},{:user,args|>Atom.to_string|>String.to_integer},:infinity)
         GenServer.start_link(__MODULE__,map,name: {:global,args})
     end
