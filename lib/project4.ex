@@ -65,7 +65,7 @@ defmodule Project4 do
       #sub=elem(GenServer.call({:Server,Node.self()},{:server,""}),2)
       const_no=cal_const(String.to_integer(number_of_node))
       const=const_no*String.to_integer(number_of_tweets)
-      
+      spawn(fn->
       Enum.reduce(1..String.to_integer(number_of_node),0,fn(x,tweet)->
         Enum.reduce(1..(const/:math.pow(x,@s)|>:math.ceil|>round),tweet,fn(y,tweet)->
           #tweet=Map.keys(elem(GenServer.call({:Server,Node.self()},{:server,""},:infinity),0))|>length
@@ -76,7 +76,7 @@ defmodule Project4 do
           end
           new_tweet
         end)
-      end)
+      end)end)
       Process.sleep(1_000_000_000)
     end
   end
