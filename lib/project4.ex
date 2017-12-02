@@ -48,10 +48,11 @@ defmodule Project4 do
       IO.puts "Building Subscription list"
       #we have added start to make the messages go on other nodes as well
       Enum.map(1..String.to_integer(number_of_node),fn(x)->
-        val=Enum.take_random(1..(String.to_integer(number_of_node)+start),(const/:math.pow(x,@s)|>:math.ceil|>round))
-        GenServer.cast({:global,(x+start)|>Integer.to_string|>String.to_atom},{:subscribe,val,"",""})
-        GenServer.cast({:global,:Server},{:subscribe,(x+start),val,0})
-        #spawn(fn->random_start_stop(x+start)end)
+        spawn(fn->
+          val=Enum.take_random(1..(String.to_integer(number_of_node)+start),(const/:math.pow(x,@s)|>:math.ceil|>round))
+          GenServer.cast({:global,(x+start)|>Integer.to_string|>String.to_atom},{:subscribe,val,"",""})
+          GenServer.cast({:global,:Server},{:subscribe,(x+start),val,0})
+        end)
       end)
       if(length(args)>4) do
         Enum.map(1..String.to_integer(elem(args|>List.to_tuple,4)),fn(x)->
