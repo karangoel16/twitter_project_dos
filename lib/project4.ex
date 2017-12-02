@@ -63,7 +63,7 @@ defmodule Project4 do
 
       IO.puts "Starting Tweet"
       #sub=elem(GenServer.call({:Server,Node.self()},{:server,""}),2)
-      const_no=cal_const(String.to_integer(number_of_tweets))
+      const_no=cal_const(String.to_integer(number_of_node))
       const=const_no*String.to_integer(number_of_tweets)
       
       Enum.reduce(1..String.to_integer(number_of_node),0,fn(x,tweet)->
@@ -84,7 +84,7 @@ defmodule Project4 do
   
   def random_start_stop(x) do
     Process.sleep(1000)
-    if(:rand.uniform(100)==2) do
+    if(:rand.uniform(100000)==2) do
       if (GenServer.whereis({:global,x|>Integer.to_string|>String.to_atom})!=nil) do
         GenServer.stop({:global,x|>Integer.to_string|>String.to_atom})
         random_start_stop(x)
