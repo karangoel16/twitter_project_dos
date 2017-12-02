@@ -29,8 +29,9 @@ defmodule Project4 do
     if elem(args|>List.to_tuple,0)=="server" do
       #this is for the number of tweets if we have server in the same
       Project4.Exdistutils.start_distributed(:project4)
+      Project4.Counter.start_link(0)
       Project4.start_link(args)
-      spawn(fn->loop(-1) end)
+      spawn(fn->Project4.Counter.loop(-1) end)
       Process.sleep(1_000_000_000)
     else
       Project4.Client.connect(args)
@@ -80,16 +81,6 @@ defmodule Project4 do
     end
   end
   
-  def loop(prev_len) do
-    #IO.puts prev_len
-    len=elem(GenServer.call({:global,:Server},{:server,""},:infinity),5)
-    IO.puts len-prev_len
-    #if prev_len == len do
-    #  Process.exit(self(),:kill)
-    #end
-    Process.sleep(1000)
-    loop(len)
-  end
   
   def random_start_stop(x) do
     Process.sleep(1000)

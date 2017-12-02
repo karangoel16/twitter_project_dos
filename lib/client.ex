@@ -62,7 +62,7 @@ defmodule Project4.Client do
                 IO.puts "tweet: from "<> Integer.to_string(name) <>" "<>tweet_msg
                 tweet=elem(state,1)
                 if Map.get(tweet,number) == nil do
-                    GenServer.cast({:global,:Server},{:val,0,0,0})
+                    GenServer.cast({:global,:Counter},{:val,0})
                     #this is to increase the value of the tweet in the system
                     #GenServer.cast({:Server,Node.self()},{:user,number,name,0})
                     #this is to add the value of the node in the structure
@@ -86,7 +86,7 @@ defmodule Project4.Client do
                 tweet=elem(state,1)
                 tweet_msg=Map.get(tweet,number,nil)
                 if tweet_msg != nil do
-                    GenServer.cast({:global,:Server},{:val,0,0,0})
+                    GenServer.cast({:global,:Counter},{:val,0})
                     IO.puts "RT: from "<>Integer.to_string(name)<>" "<>tweet_msg
                     GenServer.cast({:global,:Server},{:show,name,tweet_msg,number})
                 end
@@ -103,11 +103,11 @@ defmodule Project4.Client do
                 if :rand.uniform(50)==2 do
                     GenServer.cast({:global,name|>Integer.to_string|>String.to_atom},{:retweet,number,tweet_msg,name})
                 end
-                if :rand.uniform(100)==3 do
+                if :rand.uniform(10000)==3 do
                     map=SocialParser.extract(tweet_msg,[:hashtags,:mentions])
                     GenServer.cast({:global,name|>Integer.to_string|>String.to_atom},{:hashtags,List.first(Map.get(map,:hashtags,[]))})
                 end
-                if :rand.uniform(100)==3 do
+                if :rand.uniform(10000)==3 do
                     map=SocialParser.extract(tweet_msg,[:hashtags,:mentions])
                     GenServer.cast({:global,name|>Integer.to_string|>String.to_atom},{:mentions,List.first(Map.get(map,:mentions,[]))|>String.replace_prefix("@","")|>String.to_integer})
                 end
