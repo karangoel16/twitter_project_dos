@@ -179,9 +179,7 @@ defmodule Project4 do
        :user->
         tweet=elem(state,0)
         user=elem(state,4)
-        reply=Enum.map(Map.get(user,name,MapSet.new)|>MapSet.to_list,fn(x)->
-          Map.get(tweet,x)
-        end)  
+        reply={user,tweet}
         user=Map.put(user,name,MapSet.new)
         state=Tuple.delete_at(state,4)|>Tuple.insert_at(4,user)        
     end

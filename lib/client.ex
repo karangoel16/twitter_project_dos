@@ -16,11 +16,16 @@ defmodule Project4.Client do
         Process.sleep(1000)
         #connect(args)
     end
-
+    def genvalue({user,tweet},name) do
+        reply=Enum.map(Map.get(user,name,MapSet.new)|>MapSet.to_list,fn(x)->
+            Map.get(tweet,x)
+        end)
+        reply 
+    end
     def start_link(args) do
         map=elem(GenServer.call({:global,:Server},{:server,""},:infinity),3)
         IO.puts "new values while closed "<>Atom.to_string(args)
-        IO.inspect GenServer.call({:global,:Server},{:user,args|>Atom.to_string|>String.to_integer},:infinity)
+        IO.inspect genvalue(GenServer.call({:global,:Server},{:user,args|>Atom.to_string|>String.to_integer},:infinity),args|>Atom.to_string|>String.to_integer)
         GenServer.start_link(__MODULE__,map,name: {:global,args})
     end
 
