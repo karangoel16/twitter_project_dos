@@ -32,25 +32,28 @@ defmodule Project4.Client do
         {:ok,{args,%{},%{}}} #here the first elem is for the subsriber, #second elem is for the tweets
     end
 
-  def handle_call({msg,name},_from,state) do
+  def handle_cast({msg,name},state) do
     reply=""
     case msg do
        :mentions->
          tup=GenServer.call({:global,:Server},{msg,name},:infinity)
          tweet=elem(tup,0)
          mentions=elem(tup,1)
-        Enum.map(MapSet.to_list(mentions),fn(x)->
-            IO.puts Map.get(tweet,x,"")  
-        end)
+        IO.inspect {"Tweets with mentions of "<>Integer.to_string(name), 
+            Enum.map(MapSet.to_list(mentions),fn(x)->
+                Map.get(tweet,x,"")  
+            end)
+        }
        :hashtags->
          tup=GenServer.call({:global,:Server},{msg,name},:infinity)
          tweet=elem(tup,0)
          hashtags=elem(tup,1)
+         IO.inspect {"Tweets with mentions "<>name,
          Enum.map(Map.get(hashtags,name,MapSet.new)|>MapSet.to_list,fn(x)->
-            IO.puts Map.get(tweet,x,"")   
-         end)
+            Map.get(tweet,x,"")   
+         end)}
     end
-    {:reply,reply,state}
+    {:noreply,state}
   end
 
     def handle_cast({msg,number,tweet_msg,name},state) do
@@ -99,6 +102,14 @@ defmodule Project4.Client do
             :show->
                 if :rand.uniform(50)==2 do
                     GenServer.cast({:global,name|>Integer.to_string|>String.to_atom},{:retweet,number,tweet_msg,name})
+                end
+                if :rand.uniform(100)==3 do
+                    map=SocialParser.extract(tweet_msg,[:hashtags,:mentions])
+                    GenServer.cast({:global,name|>Integer.to_string|>String.to_atom},{:hashtags,List.first(Map.get(map,:hashtags,[]))})
+                end
+                if :rand.uniform(100)==3 do
+                    map=SocialParser.extract(tweet_msg,[:hashtags,:mentions])
+                    GenServer.cast({:global,name|>Integer.to_string|>String.to_atom},{:mentions,List.first(Map.get(map,:mentions,[]))|>String.replace_prefix("@","")|>String.to_integer})
                 end
                 tweet=elem(state,1)
                 tweet=Map.put(tweet,number,tweet_msg)
