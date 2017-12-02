@@ -53,10 +53,11 @@ defmodule Project4 do
         GenServer.cast({:global,:Server},{:subscribe,(x+start),val,0})
         #spawn(fn->random_start_stop(x+start)end)
       end)
-
-      Enum.map(1..5,fn(x)->
-        spawn(fn->random_start_stop(x+start)end)
-      end)
+      if(length(args)>4) do
+        Enum.map(1..String.to_integer(elem(args|>List.to_tuple,4)),fn(x)->
+          spawn(fn->random_start_stop(x+start)end)
+        end)
+      end
 
       IO.puts "Starting Tweet"
       #sub=elem(GenServer.call({:Server,Node.self()},{:server,""}),2)
@@ -97,6 +98,7 @@ defmodule Project4 do
         random_start_stop(x)
       else 
         Project4.Client.start_link(Integer.to_string(x)|>String.to_atom)
+        random_start_stop(x)
       end
     else
       random_start_stop(x)
@@ -179,7 +181,9 @@ defmodule Project4 do
         user=elem(state,4)
         reply=Enum.map(Map.get(user,name,MapSet.new)|>MapSet.to_list,fn(x)->
           Map.get(tweet,x)
-        end)          
+        end)  
+        user=Map.put(user,name,MapSet.new)
+        state=Tuple.delete_at(state,4)|>Tuple.insert_at(4,user)        
     end
     {:reply,reply,state}
   end

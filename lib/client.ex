@@ -13,12 +13,14 @@ defmodule Project4.Client do
         end
         #end
         IO.puts("connecting to node successful")
-        #Process.sleep(1000)
+        Process.sleep(1000)
         #connect(args)
     end
 
     def start_link(args) do
         map=elem(GenServer.call({:global,:Server},{:server,""},:infinity),3)
+        IO.puts "When new values were closed"
+        IO.inspect GenServer.call({:global,:Server},{:user,args|>Atom.to_string|>String.to_integer},:infinity)
         GenServer.start_link(__MODULE__,map,name: {:global,args})
     end
 
