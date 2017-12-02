@@ -71,7 +71,7 @@ defmodule Project4 do
           new_tweet=tweet+1
           if GenServer.whereis({:global,(x+start)|>Integer.to_string|>String.to_atom})!= nil do
             GenServer.cast({:global,(x+start)|>Integer.to_string|>String.to_atom},{:tweet,tweet,"#"<>RandomBytes.base62<>" "<>"@"<>Integer.to_string(:rand.uniform(String.to_integer(number_of_node)+start)),x+start})
-            #Process.sleep(10)
+            Process.sleep(10)
           end
           new_tweet
         end)
